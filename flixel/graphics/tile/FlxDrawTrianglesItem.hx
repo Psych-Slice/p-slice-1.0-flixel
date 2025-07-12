@@ -13,7 +13,7 @@ import openfl.display.ShaderParameter;
 import openfl.display.TriangleCulling;
 import openfl.geom.ColorTransform;
 
-typedef DrawData<T> = #if (flash || openfl >= "4.0.0") openfl.Vector<T> #else Array<T> #end;
+typedef DrawData<T> = openfl.Vector<T>;
 
 /**
  * @author Zaphod
@@ -70,13 +70,16 @@ class FlxDrawTrianglesItem extends FlxDrawBaseItem<FlxDrawTrianglesItem>
 			shader.colorMultiplier.value = colorMultipliers;
 			shader.colorOffset.value = colorOffsets;
 		}
+		else
+		{
+			shader.colorMultiplier.value = null;
+			shader.colorOffset.value = null;
+		}
 
 		setParameterValue(shader.hasTransform, true);
 		setParameterValue(shader.hasColorTransform, colored || hasColorOffsets);
 
-		#if (openfl > "8.7.0")
 		camera.canvas.graphics.overrideBlendMode(blend);
-		#end
 
 		camera.canvas.graphics.beginShaderFill(shader);
 		#else
@@ -101,10 +104,10 @@ class FlxDrawTrianglesItem extends FlxDrawBaseItem<FlxDrawTrianglesItem>
 	override public function reset():Void
 	{
 		super.reset();
-		vertices.splice(0, vertices.length);
-		indices.splice(0, indices.length);
-		uvtData.splice(0, uvtData.length);
-		colors.splice(0, colors.length);
+		vertices.length = 0;
+		indices.length = 0;
+		uvtData.length = 0;
+		colors.length = 0;
 
 		verticesPosition = 0;
 		indicesPosition = 0;
@@ -175,6 +178,7 @@ class FlxDrawTrianglesItem extends FlxDrawBaseItem<FlxDrawTrianglesItem>
 			i += 2;
 		}
 
+		var indicesLength:Int = indices.length;
 		if (!cameraBounds.overlaps(bounds))
 		{
 			this.vertices.splice(this.vertices.length - verticesLength, verticesLength);
@@ -187,7 +191,6 @@ class FlxDrawTrianglesItem extends FlxDrawBaseItem<FlxDrawTrianglesItem>
 				this.uvtData[prevUVTDataLength + i] = uvtData[i];
 			}
 
-			var indicesLength:Int = indices.length;
 			for (i in 0...indicesLength)
 			{
 				this.indices[prevIndicesLength + i] = indices[i] + prevNumberOfVertices;
@@ -211,10 +214,8 @@ class FlxDrawTrianglesItem extends FlxDrawBaseItem<FlxDrawTrianglesItem>
 		cameraBounds.putWeak();
 
 		#if !flash
-		for (_ in 0...numTriangles)
+		for (_ in 0...indicesLength)
 		{
-			alphas.push(transform != null ? transform.alphaMultiplier : 1.0);
-			alphas.push(transform != null ? transform.alphaMultiplier : 1.0);
 			alphas.push(transform != null ? transform.alphaMultiplier : 1.0);
 		}
 
@@ -226,7 +227,7 @@ class FlxDrawTrianglesItem extends FlxDrawBaseItem<FlxDrawTrianglesItem>
 			if (colorOffsets == null)
 				colorOffsets = [];
 
-			for (_ in 0...(numTriangles * 3))
+			for (_ in 0...indicesLength)
 			{
 				if(transform != null)
 				{
